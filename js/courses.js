@@ -366,44 +366,58 @@ function wirePage(container, course, words) {
     document.execCommand("defaultParagraphSeparator", false, "p");
   } catch {}
 
-  // 換行（Enter）處理，兩個目的：
-  // 1. 在條列/編號裡換行，瀏覽器預設會自動幫下一行也接著變成條列——使用者
-  //    不想要這樣，換行後應該回到普通段落。做法：先讓瀏覽器照原本的方式
-  //    換行（會產生新的一個條列項目），游標這時剛好停在這個新的空項目
-  //    上，馬上把它的清單格式關掉、變回普通段落；原本打好的那一行維持
-  //    是條列，不受影響。
-  // 2. 不管是不是在條列裡換行，如果換行前那一行有套顏色／字級，瀏覽器會
-  //    把游標留在同一個樣式 span 裡，導致換行後打的新字自動繼承顏色／
-  //    字級——這也不是使用者要的，換行後應該回到預設黑字、預設字級，用
-  //    escapeEmptyStyleSpanAtCursor() 把游標帶出那個空的樣式殼。
+  // 換行（Enter）完全自己手動處理，不透過瀏覽器的 execCommand。
+  // 前幾輪都是「先讓瀏覽器用它自己的方式換行，再事後清理殘留的顏色/字
+  // 級」，但瀏覽器內部會另外記住一份「目前打字要用的格式」，這份記憶
+  // 獨立於 HTML 結構之外、清不乾淨，不管怎麼事後補救都不夠穩定。這次
+  // 換行動作完全自己控制：自己找出游標位置、把游標之後的內容切到一個
+  // 全新建立、保證沒有任何 class／style 的 <p> 裡，游標移過去——因為
+  // 這個新段落是我們自己用 document.createElement 生出來的，從頭到尾
+  // 沒有經過瀏覽器的「延續格式」邏輯，也就沒有殘留可以繼承。
   notesEditable.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" || e.shiftKey) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
-    let node = sel.getRangeAt(0).startContainer;
-    if (node.nodeType === 3) node = node.parentNode;
-    const li = node.closest && node.closest("li");
-    if (li) {
-      const wasOrdered = !!node.closest("ol");
-      e.preventDefault();
-      document.execCommand("insertParagraph");
-      document.execCommand(wasOrdered ? "insertOrderedList" : "insertUnorderedList");
+    e.preventDefault();
+
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) range.deleteContents();
+
+    let block = range.startContainer;
+    if (block.nodeType === 3) block = block.parentNode;
+    while (block && block !== notesEditable && !["P", "LI", "H2", "H3", "BLOCKQUOTE"].includes(block.tagName)) {
+      block = block.parentNode;
     }
-    // 兩種情況統一延後清理（不是換完清單立刻清）：實測發現退出清單那條路徑
-    // 如果緊接著執行 execCommand 之後「同一瞬間」就清理，瀏覽器有時還沒把
-    // DOM／選取範圍真正更新完，清理動作會撲空，殘留的顏色/字級樣式清不
-    // 掉。改成跟一般段落換行一樣，等瀏覽器確定處理完這一輪才清理，兩條
-    // 路徑用同一種寫法，行為才會一致。
-    setTimeout(() => {
-      escapeEmptyStyleSpanAtCursor(notesEditable);
-      // escapeEmptyStyleSpanAtCursor 清的是 HTML 結構；但瀏覽器另外還會
-      // 自己記住「目前打字要用的格式」，這個記憶獨立於 HTML 結構之外，
-      // 光清結構清不掉它——這也是為什麼編輯中還看得到顏色殘留，但存檔
-      // 後（存檔會過濾掉不認得的樣式）畫面又是正常的。這裡额外呼叫瀏覽
-      // 器原生的「清除格式」指令，明確重設這個內部記憶，換行後的新字才
-      // 會真的以預設樣式呈現，不是只有存檔後才「補救」回來。
-      document.execCommand("removeFormat");
-    }, 0);
+    if (!block || block === notesEditable) return;
+
+    // 把游標之後（同一個區塊內剩下）的內容切出來，放進新段落——這樣在一
+    // 行的「中間」按 Enter，後半段文字會正確被搬到新的一行，不會憑空消失。
+    const afterRange = document.createRange();
+    afterRange.setStart(range.startContainer, range.startOffset);
+    afterRange.setEndAfter(block.lastChild || block);
+    const movedContent = afterRange.extractContents();
+
+    const newBlock = document.createElement("p");
+    if (movedContent.textContent) newBlock.appendChild(movedContent);
+    else newBlock.appendChild(document.createElement("br"));
+
+    const list = block.tagName === "LI" ? block.closest("ul, ol") : null;
+    if (list) {
+      // 退出清單：新段落插在整個清單外面，不是清單裡的下一項。
+      list.parentNode.insertBefore(newBlock, list.nextSibling);
+      // 原本那一項如果被搬空了（游標本來就在項目最前面），而且清單裡
+      // 還有其他項目，把這個空項目移除；如果它是清單唯一的項目，保留
+      // 它，不然整個清單會憑空消失。
+      if (block.textContent === "" && list.children.length > 1) block.remove();
+    } else {
+      block.parentNode.insertBefore(newBlock, block.nextSibling);
+    }
+
+    const newRange = document.createRange();
+    newRange.setStart(newBlock, 0);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   });
 
   toggleEditNotesBtn.onclick = () => {
