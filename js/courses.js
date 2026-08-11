@@ -388,12 +388,22 @@ function wirePage(container, course, words) {
       e.preventDefault();
       document.execCommand("insertParagraph");
       document.execCommand(wasOrdered ? "insertOrderedList" : "insertUnorderedList");
-      escapeEmptyStyleSpanAtCursor(notesEditable);
-    } else {
-      // 一般段落換行交給瀏覽器原生處理；換行動作完成「之後」才清理，
-      // 因為這裡還沒 preventDefault，此時瀏覽器實際上還沒真的換行。
-      setTimeout(() => escapeEmptyStyleSpanAtCursor(notesEditable), 0);
     }
+    // 兩種情況統一延後清理（不是換完清單立刻清）：實測發現退出清單那條路徑
+    // 如果緊接著執行 execCommand 之後「同一瞬間」就清理，瀏覽器有時還沒把
+    // DOM／選取範圍真正更新完，清理動作會撲空，殘留的顏色/字級樣式清不
+    // 掉。改成跟一般段落換行一樣，等瀏覽器確定處理完這一輪才清理，兩條
+    // 路徑用同一種寫法，行為才會一致。
+    setTimeout(() => {
+      escapeEmptyStyleSpanAtCursor(notesEditable);
+      // escapeEmptyStyleSpanAtCursor 清的是 HTML 結構；但瀏覽器另外還會
+      // 自己記住「目前打字要用的格式」，這個記憶獨立於 HTML 結構之外，
+      // 光清結構清不掉它——這也是為什麼編輯中還看得到顏色殘留，但存檔
+      // 後（存檔會過濾掉不認得的樣式）畫面又是正常的。這裡额外呼叫瀏覽
+      // 器原生的「清除格式」指令，明確重設這個內部記憶，換行後的新字才
+      // 會真的以預設樣式呈現，不是只有存檔後才「補救」回來。
+      document.execCommand("removeFormat");
+    }, 0);
   });
 
   toggleEditNotesBtn.onclick = () => {
