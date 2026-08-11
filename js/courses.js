@@ -366,14 +366,19 @@ function wirePage(container, course, words) {
     document.execCommand("defaultParagraphSeparator", false, "p");
   } catch {}
 
+  // 換行後「打的第一個字」如果被瀏覽器自己包上顏色/字級，馬上偵測到就
+  // 拆掉——見下面的 input 監聽器。這個旗標只用來標記「剛換行，接下來
+  // 這一次輸入要檢查」，檢查完（不管有沒有拆到東西）就重設，不會影響
+  // 使用者之後自己點顏色/字級按鈕、正常輸入的內容。
+  let justPressedEnter = false;
+
   // 換行（Enter）完全自己手動處理，不透過瀏覽器的 execCommand。
   // 前幾輪都是「先讓瀏覽器用它自己的方式換行，再事後清理殘留的顏色/字
   // 級」，但瀏覽器內部會另外記住一份「目前打字要用的格式」，這份記憶
-  // 獨立於 HTML 結構之外、清不乾淨，不管怎麼事後補救都不夠穩定。這次
-  // 換行動作完全自己控制：自己找出游標位置、把游標之後的內容切到一個
-  // 全新建立、保證沒有任何 class／style 的 <p> 裡，游標移過去——因為
-  // 這個新段落是我們自己用 document.createElement 生出來的，從頭到尾
-  // 沒有經過瀏覽器的「延續格式」邏輯，也就沒有殘留可以繼承。
+  // 獨立於 DOM 結構之外——連換到一個全新、從沒被瀏覽器碰過的 <p> 都還是
+  // 會繼承，證明這不是「哪個標籤沒清乾淨」的問題，而是瀏覽器自己在背
+  // 後記著、不受我們建立的容器影響。與其繼續猜「怎麼預防」，改成「打完
+  // 第一個字，馬上檢查、馬上拆」，見下面 input 監聽器。
   notesEditable.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" || e.shiftKey) return;
     const sel = window.getSelection();
@@ -418,6 +423,34 @@ function wirePage(container, course, words) {
     newRange.collapse(true);
     sel.removeAllRanges();
     sel.addRange(newRange);
+
+    justPressedEnter = true;
+  });
+
+  // 換行後打的第一個字，如果瀏覽器自己把它包上了顏色/字級（不管是用哪種
+  // 標籤或屬性），這裡直接抓「游標當下實際所在」的標籤往上拆，拆到遇到
+  // 沒有樣式的節點為止——不用事先猜是哪一種標籤/屬性，反正只要有樣式就
+  // 拆。只在換行後的第一次輸入做這件事，之後（使用者自己點顏色/字級按
+  // 鈕套用的）都不會被這裡動到。
+  notesEditable.addEventListener("input", () => {
+    if (!justPressedEnter) return;
+    justPressedEnter = false;
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    let node = sel.getRangeAt(0).startContainer;
+    if (node.nodeType === 3) node = node.parentNode;
+
+    while (node && node !== notesEditable && (node.tagName === "SPAN" || node.tagName === "FONT")) {
+      const hasStyleClass = (node.getAttribute("class") || "").split(/\s+/).some((c) => c.startsWith("hl-") || c.startsWith("fs-"));
+      const hasInlineStyle = node.hasAttribute("style") || node.hasAttribute("color") || node.hasAttribute("size");
+      if (!hasStyleClass && !hasInlineStyle) break;
+      const parent = node.parentNode;
+      if (!parent) break;
+      while (node.firstChild) parent.insertBefore(node.firstChild, node);
+      parent.removeChild(node);
+      node = parent;
+    }
   });
 
   toggleEditNotesBtn.onclick = () => {
