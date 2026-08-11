@@ -1,0 +1,624 @@
+:root {
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-alt: #ECEEF1;
+  --ink: #14181D;
+  --ink-dim: #55606B;
+  --ink-faint: #87919B;
+  --border: #DCE0E5;
+  --accent: #1B6F63;
+  --accent-ink: #0F4F46;
+  --accent-soft: #DCEEEA;
+  --accent-2: #B3541E;
+  --accent-2-soft: #F3E3D6;
+  --danger: #B3261E;
+  --danger-soft: #F8E2E0;
+  --warning: #8A6D0A;
+  --warning-soft: #F5EACB;
+  --grammar: #6D4AA8;
+  --grammar-soft: #E9DEF5;
+  --hl-red: #C0463D; --hl-orange: #B3541E; --hl-green: #2F8F5B; --hl-blue: #2E6FB0; --hl-purple: #7A4FB0;
+  --hl-red-soft: #F6DBD8; --hl-orange-soft: #F5E4D0; --hl-green-soft: #DCEEE1; --hl-blue-soft: #DCE7F5; --hl-purple-soft: #E9DEF5;
+  --shadow: 0 1px 2px rgba(20,24,29,0.04), 0 8px 24px rgba(20,24,29,0.08);
+  --font-cjk: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Menlo", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1316; --surface: #161C20; --surface-alt: #1E262B;
+    --ink: #E8ECEF; --ink-dim: #97A3AC; --ink-faint: #64707A; --border: #2B343A;
+    --accent: #4FBFAE; --accent-ink: #BFF0E6; --accent-soft: #163632;
+    --accent-2: #E0954F; --accent-2-soft: #2E2419;
+    --danger: #E5847B; --danger-soft: #3A211E;
+    --warning: #E0C36B; --warning-soft: #332B12;
+    --grammar: #B29AE0; --grammar-soft: #2B2138;
+    --hl-red: #E08A82; --hl-orange: #E0954F; --hl-green: #6FC79A; --hl-blue: #7FB4E8; --hl-purple: #B79AE0;
+    --hl-red-soft: #3A2320; --hl-orange-soft: #33241A; --hl-green-soft: #1E3226; --hl-blue-soft: #1E2C3A; --hl-purple-soft: #2B2138;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  }
+}
+
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+/* 全站字級基準：瀏覽器預設是 16px，不是 14px（專案裡原本沒有明寫這個值，
+   等於一直吃瀏覽器預設）。這裡明確拉大到 18px（+12.5%，落在需求的
+   10~15% 區間），因為全站文字幾乎都用 rem／em 相對單位，這一行改了，
+   導覽列、卡片、列表、筆記會一起等比放大，不用一個一個元件調。 */
+html { font-size: 18px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-cjk);
+  line-height: 1.6;
+}
+button, input, select, textarea { font-family: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+code { font-family: var(--font-mono); }
+
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 20px; padding: 10px 18px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap;
+}
+.brand { font-weight: 700; font-size: 1.02rem; white-space: nowrap; }
+.nav { display: flex; gap: 6px; flex: 1; }
+.nav-chip {
+  padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  color: var(--ink-dim); display: flex; align-items: center; gap: 6px;
+}
+.nav-chip:hover { background: var(--surface-alt); }
+.nav-chip.active { background: var(--accent-soft); color: var(--accent-ink); }
+.due-badge {
+  font-family: var(--font-mono); font-size: 0.7rem; background: var(--accent-2); color: #fff;
+  padding: 1px 6px; border-radius: 100px;
+}
+.global-actions { display: flex; gap: 8px; }
+
+.btn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+  padding: 8px 14px; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer;
+}
+.btn:hover { background: var(--surface-alt); }
+.btn-ghost { background: transparent; }
+.btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-accent:hover { filter: brightness(1.06); }
+.btn-danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover { background: var(--danger-soft); }
+.btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- main / views ---------- */
+main { flex: 1; min-height: 0; position: relative; }
+.view { position: absolute; inset: 0; overflow: auto; }
+
+/* ---------- graph view ---------- */
+#view-graph { overflow: hidden; }
+.graph-toolbar {
+  position: absolute; top: 14px; left: 14px; z-index: 2; display: flex; gap: 8px; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow);
+  font-size: 0.82rem; color: var(--ink-dim);
+}
+.graph-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; text-align: center; padding: 24px;
+}
+.graph-empty p { color: var(--ink-dim); max-width: 40ch; margin: 0; }
+canvas#graph-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+canvas#graph-canvas:active { cursor: grabbing; }
+.graph-focus-banner {
+  position: absolute; top: 60px; left: 14px; z-index: 2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--accent-soft); color: var(--accent-ink); border-radius: 10px; padding: 8px 14px;
+  font-size: 0.82rem; box-shadow: var(--shadow); max-width: calc(100% - 28px);
+}
+.graph-focus-banner a { color: var(--accent-ink); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.graph-focus-banner a:hover { text-decoration: underline; }
+.graph-focus-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.graph-legend {
+  position: absolute; bottom: 14px; left: 14px; z-index: 2; display: flex; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow);
+  font-size: 0.76rem; color: var(--ink-dim);
+}
+.legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+
+/* ---------- list view ---------- */
+.list-wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
+.list-controls { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.list-controls input[type="text"], .list-controls select {
+  border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem;
+}
+.list-controls input[type="text"] { flex: 1; min-width: 200px; }
+.list-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.list-count-chip {
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-dim); border-radius: 100px;
+  padding: 6px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;
+}
+.list-count-chip strong { font-family: var(--font-mono); }
+.list-count-chip.active { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+.list-count-chip:hover { border-color: var(--accent); }
+.list-result-count { font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 10px; min-height: 1em; }
+.node-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface); margin-bottom: 8px; cursor: pointer;
+}
+.node-row:hover { border-color: var(--accent); }
+.type-badge {
+  font-family: var(--font-mono); font-size: 0.875rem; padding: 4px 10px; border-radius: 100px; white-space: nowrap;
+}
+.type-word { background: var(--accent-soft); color: var(--accent-ink); }
+.type-phrase { background: var(--accent-2-soft); color: var(--accent-2); }
+.type-sentence { background: var(--surface-alt); color: var(--ink-dim); }
+.type-grammar { background: var(--grammar-soft); color: var(--grammar); }
+/* min-width:0 讓這個 flex 項目真的能縮小到比文字內容窄（flex 預設的
+   min-width:auto 會擋住這件事），標題太長時才會乖乖被 ellipsis 截斷，
+   而不是硬跟右邊的老師名稱搶空間、把彼此擠到看起來錯位或疊在一起。 */
+.node-row .headword { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node-row .translation { color: var(--ink-dim); font-size: 0.88rem; flex: 1; }
+.node-row .edge-count {
+  font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink-faint); white-space: nowrap;
+  grid-column: 3; justify-self: start;
+}
+/* 真正的固定欄位版面：用 grid 而不是 flex——flex 是「內容決定寬度、彼此
+   互搶空間」，同一欄的起點必然跟著內容長度飄動；grid 的欄寬是寫死的，
+   不管某一欄實際內容多長/多短/甚至沒有，其他欄的起點都固定在同一個 X
+   座標，「N 個單字」才不會因為老師名字長短不同而跟著移動。 */
+.course-list-meta {
+  display: grid; grid-template-columns: 130px 10px auto; align-items: center; column-gap: 4px;
+  flex-shrink: 0;
+}
+.course-list-teacher {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: var(--ink-faint);
+  grid-column: 1; min-width: 0; overflow: hidden;
+}
+/* 改用 SVG 圖示取代 emoji（見 courses.js 的 TEACHER_ICON_SVG）——emoji 在
+   不同系統/字體裡的繪製位置不一致，沒辦法用 CSS 穩定對齊；SVG 是精準的
+   向量圖形，大小固定、置中可以完全控制，不會再有對不齊的問題。 */
+.course-list-teacher-icon { width: 12px; height: 12px; flex-shrink: 0; display: block; }
+.course-list-teacher-name {
+  line-height: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.course-list-meta-sep { font-size: 0.76rem; color: var(--ink-faint); grid-column: 2; }
+.course-keywords-chip {
+  font-size: 0.76rem; color: var(--accent-ink); background: var(--accent-soft); border-radius: 100px;
+  padding: 2px 9px; white-space: nowrap; flex-shrink: 0;
+}
+.overdue-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); flex-shrink: 0; }
+
+/* 列表頁：跟「本堂課單字」用同一套固定欄寬的網格對齊邏輯，多一個到期小圓
+   點的欄位；不顯示關聯數，把空間留給單字本身（headword 欄位比例比詞性/
+   翻譯欄位額外加大），詞性／翻譯欄寬維持不變，確保對齊不受影響。
+   只加在 .list-node-row，不動 .node-row 本身，課程列表頁還是原本的排版。
+   卡片本身維持原本大小／字級，改成兩欄並排（見下面 #list-results），靠
+   縮短「每張卡片的寬度」而不是縮小內容，讓一頁能放更多單字。 */
+.list-node-row {
+  display: grid; grid-template-columns: 14px 60px minmax(0, 1.3fr) 60px minmax(0, 1.5fr); align-items: center; gap: 10px;
+  margin-bottom: 0; /* 間距改由 #list-results 的 grid gap 統一控制 */
+}
+.overdue-marker { display: flex; align-items: center; justify-content: center; }
+.list-node-headword { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-node-pos {
+  font-size: 0.72rem; color: var(--ink-faint); background: var(--surface-alt); border-radius: 100px;
+  padding: 2px 8px; text-align: center; justify-self: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.list-node-translation { color: var(--ink-dim); font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#list-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 14px; align-items: start; }
+/* 文法標題常常比較長，單獨佔滿一整行，避免跟旁邊欄位擠在一起；單字／片語維持兩欄並排。 */
+.list-node-row-full { grid-column: 1 / -1; }
+.empty-state { color: var(--ink-faint); text-align: center; padding: 60px 20px; }
+
+/* ---------- pending questions view ---------- */
+.pending-add {
+  display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+}
+.pending-add textarea {
+  flex: 1; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem;
+  font-family: inherit; background: var(--surface); color: var(--ink);
+}
+.pending-row {
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 12px 14px; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pending-content { font-size: 0.95rem; white-space: pre-wrap; }
+.pending-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pending-tag {
+  font-size: 0.76rem; background: var(--surface-alt); color: var(--ink-dim); padding: 3px 9px; border-radius: 100px; cursor: pointer;
+}
+.pending-tag:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.pending-date { font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-faint); margin-left: auto; }
+.pending-resolution { font-size: 0.86rem; color: var(--ink-dim); background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; }
+.pending-actions { display: flex; gap: 8px; }
+.pending-resolve-form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.pending-resolve-form textarea {
+  resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.86rem;
+  font-family: inherit; background: var(--surface); color: var(--ink);
+}
+
+/* ---------- review view ---------- */
+.review-wrap { max-width: 600px; margin: 0 auto; padding: 30px 20px 60px; display: flex; flex-direction: column; gap: 20px; }
+#review-body { display: flex; flex-direction: column; gap: 20px; }
+
+/* 頂部控制列：把狀態／類型／模式三排按鈕、跟小字統計，收進同一個灰底卡片，
+   減少畫面上分散的視覺雜訊——內層的 pill 分組樣式不變，只是換了外框。 */
+.review-control-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px;
+}
+.review-control-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.review-progress-inline { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint); white-space: nowrap; margin-left: auto; }
+
+.review-mode-bar { display: flex; gap: 6px; background: var(--surface-alt); padding: 4px; border-radius: 10px; }
+.review-mode-btn { border: none; background: transparent; color: var(--ink-dim); padding: 7px 16px; border-radius: 7px; font-size: 0.86rem; font-weight: 600; cursor: pointer; }
+.review-mode-btn.active { background: var(--surface); color: var(--accent-ink); box-shadow: var(--shadow); }
+.review-scope-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: var(--accent-soft); color: var(--accent-ink); border-radius: 10px; padding: 10px 16px; font-size: 0.86rem;
+}
+.review-scope-banner a { color: var(--accent-ink); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.review-scope-banner a:hover { text-decoration: underline; }
+.review-source-bar { display: flex; gap: 6px; background: var(--surface-alt); padding: 4px; border-radius: 10px; }
+.review-source-btn {
+  border: none; background: transparent; color: var(--ink-dim); padding: 7px 16px; border-radius: 7px;
+  font-size: 0.86rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.review-source-btn strong { font-family: var(--font-mono); }
+.review-source-btn.active { background: var(--surface); color: var(--accent-ink); box-shadow: var(--shadow); }
+/* 只在複習頁的「今日到期／需要加強」這排套用固定寬度並排（見 review.js），
+   不動 .review-source-bar 本身——待處理頁的狀態切換頁籤還是原本的自適應寬度。 */
+.review-source-bar-grid { width: 100%; }
+.review-source-bar-grid .review-source-btn { flex: 1; justify-content: center; }
+.review-progress { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink-dim); }
+
+/* 主體字卡放大、陰影加重，讓畫面焦點集中在卡片本身。 */
+.review-card {
+  border: 1px solid var(--border); border-radius: 20px; background: var(--surface); padding: 56px 36px;
+  box-shadow: 0 4px 12px rgba(20,24,29,0.06), 0 16px 40px rgba(20,24,29,0.12);
+  min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px;
+}
+.review-card .headword { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.01em; }
+.review-card .translation { font-size: 1.4rem; color: var(--accent-ink); }
+.review-card .pos { font-family: var(--font-mono); font-size: 0.82rem; color: var(--ink-faint); }
+.review-answer-extra { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.review-actions { display: flex; justify-content: center; }
+
+/* 「顯示答案」是這個畫面唯一該做的動作，樣式要比其他按鈕更醒目。 */
+.review-reveal-btn {
+  padding: 16px 40px; font-size: 1rem; border-radius: 100px;
+  box-shadow: 0 6px 16px rgba(27,111,99,0.28); transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.review-reveal-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(27,111,99,0.34); filter: brightness(1.06); }
+.review-reveal-btn:active { transform: translateY(0); }
+@media (prefers-color-scheme: dark) {
+  .review-reveal-btn { box-shadow: 0 6px 16px rgba(79,191,174,0.22); }
+  .review-reveal-btn:hover { box-shadow: 0 10px 22px rgba(79,191,174,0.3); }
+}
+.rating-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.rating-btn {
+  padding: 15px 8px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface);
+  cursor: pointer; font-weight: 700; font-size: 0.92rem; text-align: center;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+.rating-btn small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--ink-faint); margin-top: 3px; }
+.rating-unknown { color: var(--ink-dim); background: var(--surface-alt); border-color: var(--border); }
+.rating-again { color: var(--danger); background: var(--danger-soft); border-color: var(--danger); }
+.rating-hard { color: var(--warning); background: var(--warning-soft); border-color: var(--warning); }
+.rating-easy { color: var(--accent-ink); background: var(--accent-soft); border-color: var(--accent); }
+.rating-btn:hover { transform: translateY(-2px); filter: brightness(0.98); box-shadow: var(--shadow); }
+.rating-btn:active { transform: translateY(0); }
+
+.spell-input-row { display: flex; gap: 10px; width: 100%; max-width: 360px; margin: 0 auto; }
+.spell-input-row input {
+  flex: 1; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 10px 12px;
+  font-size: 1rem; text-align: center;
+}
+.spell-input-row input:focus { outline: none; border-color: var(--accent); }
+.spell-result { font-size: 0.98rem; font-weight: 600; margin-top: 4px; }
+.spell-result.correct { color: var(--accent-ink); }
+.spell-result.wrong { color: var(--danger); }
+.cloze-sentence { font-size: 1.3rem; font-weight: 600; line-height: 1.6; }
+.cloze-full { font-size: 0.92rem; color: var(--ink-dim); margin-top: 4px; }
+
+/* ---------- related block (shared between review + detail panel) ---------- */
+.related-block h4, .notes-block h4 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin: 0 0 8px; }
+.related-list { display: flex; flex-direction: column; gap: 6px; }
+.related-group-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-ink); margin: 10px 0 4px; }
+.related-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-alt); cursor: pointer; font-size: 0.86rem;
+}
+.related-item:hover { border-color: var(--accent); }
+.related-item .rel-note { color: var(--ink-faint); font-size: 0.78rem; margin-left: auto; }
+
+/* 課程頁「本堂課單字」：固定欄寬的網格，讓詞性／翻譯不會隨單字長度亂飄。
+   只套用在這個列表，不動到 .related-item 在其他地方（關聯、來源課程）的排版。 */
+.course-word-row {
+  display: grid; grid-template-columns: 60px minmax(0, 1fr) 60px minmax(0, 1.5fr) auto; align-items: center; gap: 10px;
+  padding: 8px 12px; margin-bottom: 0; /* 比 .related-item 預設稍微緊一點，本堂課單字常常一次要看好幾個 */
+}
+.course-word-headword { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-word-pos {
+  font-size: 0.72rem; color: var(--ink-faint); background: var(--surface); border-radius: 100px;
+  padding: 2px 8px; text-align: center; justify-self: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.course-word-translation { color: var(--ink-dim); font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-word-delete { justify-self: end; }
+/* 螢幕夠寬時比照「列表」頁的兩欄排列（同樣的欄距／中斷點），一次看到更多
+   單字；文字本身還是靠 ellipsis 單行截斷，不靠壓縮卡片高度來擠出空間，
+   所以不會有字被裁掉或蓋住的問題。 */
+@media (min-width: 640px) {
+  .related-list.course-words-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px; }
+  .related-list.course-words-list .course-word-row { margin-bottom: 0; }
+}
+
+/* 「連結既有單字」：原本標題＋說明文字＋輸入框三行，收成一個輕量單行；
+   搜尋結果預設整個隱藏（見 courses.js），沒有查詢字串時不佔版面。 */
+.course-link-row { margin-top: 18px; }
+.course-link-search {
+  width: 100%; border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  padding: 8px 12px; font-size: 0.88rem;
+}
+#course-word-suggest { margin-top: 8px; }
+
+/* ---------- panel (node detail, slide-over) ---------- */
+.panel-backdrop {
+  position: fixed; inset: 0; background: rgba(10,14,17,0.28); z-index: 40; display: flex; justify-content: flex-end;
+}
+.panel {
+  width: clamp(420px, 42vw, 640px); max-width: 100%; height: 100%; background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: var(--shadow); overflow-y: auto; padding: 22px 22px 60px; animation: slide-in .16s ease-out;
+}
+@keyframes slide-in { from { transform: translateX(16px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
+.panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.panel-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--ink-faint); line-height: 1; padding: 4px; }
+.panel h2 { font-size: 1.4rem; margin: 4px 0 4px; text-wrap: balance; }
+.panel .pos-pron { font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 14px; }
+.panel .translation { font-size: 1.05rem; color: var(--accent-ink); font-weight: 600; margin-bottom: 18px; }
+/* 側邊欄卡片化：每個子區塊用淺灰底跟圓角跟其他區塊分開，資訊層級更清楚；
+   內層的 .related-item（出現於／待處理／關聯列表共用）改用 --surface（跟
+   .panel 本身同色）撐出對比，不然會跟外層卡片同色糊在一起。 */
+.panel-section { margin-bottom: 16px; background: var(--surface-alt); padding: 12px; border-radius: 8px; }
+.panel-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; background: var(--surface-alt); padding: 12px; border-radius: 8px; }
+.panel-section .related-item { background: var(--surface); }
+#supplement-textarea { min-height: 180px; }
+
+.layer-entry { font-size: 0.87rem; padding: 8px 10px; background: var(--bg); border-radius: 8px; display:flex; gap:8px; align-items:flex-start; }
+.layer-entry .txt { flex: 1; white-space: pre-wrap; }
+
+/* ---------- editor modal (add/edit node) ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(10,14,17,0.32); z-index: 50; display: flex; align-items: flex-start; justify-content: center;
+  padding: 6vh 16px;
+}
+.modal {
+  width: min(560px, 100%); max-height: 88vh; overflow-y: auto; background: var(--surface); border-radius: 14px;
+  box-shadow: var(--shadow); padding: 24px 26px 26px; animation: pop-in .14s ease-out;
+}
+@keyframes pop-in { from { transform: translateY(6px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+.modal-narrow { width: min(420px, 100%); text-align: center; }
+.modal h2 { margin: 0 0 18px; font-size: 1.2rem; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 5px; }
+.field input[type="text"], .field select, .field textarea {
+  width: 100%; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 9px 11px; font-size: 0.92rem;
+}
+.field textarea { resize: vertical; min-height: 50px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* 一組「詞性＋翻譯＋例句」算一個 sense-block——例句故意放在詞性正下方，
+   讀的時候才看得出這句例句是對應哪個詞性/意思，不是整個字共用一句。 */
+.sense-block { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+.sense-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.sense-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.sense-row .sense-pos { flex: 0 0 130px; cursor: pointer; }
+.sense-row .sense-translation { flex: 1; }
+.sense-row button { flex: 0 0 auto; }
+.sense-example { width: 100%; font-size: 0.85rem; }
+#senses-wrap #add-sense-btn { margin-top: 2px; }
+.senses-list { display: flex; flex-direction: column; gap: 2px; }
+.sense-detail-row { margin-bottom: 8px; }
+.sense-detail-row:last-child { margin-bottom: 0; }
+.sense-example-line { font-size: 0.82rem; color: var(--ink-faint); font-style: italic; margin-top: 2px; }
+
+.synonym-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.synonym-chip {
+  display: inline-flex; align-items: center; gap: 5px; background: var(--surface-alt); color: var(--ink-dim);
+  border-radius: 100px; padding: 3px 6px 3px 10px; font-size: 0.82rem;
+}
+.synonym-chip button {
+  border: none; background: none; color: var(--ink-faint); cursor: pointer; font-size: 0.76rem; line-height: 1;
+  padding: 3px; border-radius: 50%;
+}
+.synonym-chip button:hover { background: var(--surface); color: var(--danger); }
+.synonym-chip-static { padding: 3px 10px; }
+.synonym-add-row { display: flex; gap: 8px; margin-top: 8px; }
+.synonym-add-row input { flex: 1; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 7px 10px; font-size: 0.86rem; }
+.type-toggle { display: flex; gap: 6px; }
+.type-toggle button {
+  flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 0.86rem; font-weight: 600;
+}
+.type-toggle button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+
+.suggest-box { border: 1px solid var(--border); border-radius: 10px; padding: 10px; max-height: 160px; overflow-y: auto; }
+.suggest-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 0.86rem; }
+.suggest-item:hover { background: var(--surface-alt); }
+.suggest-empty { color: var(--ink-faint); font-size: 0.84rem; padding: 6px 8px; }
+
+.relation-pending {
+  display: flex; align-items: center; gap: 8px; background: var(--accent-soft); border: 1px solid var(--accent);
+  border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 0.85rem; color: var(--accent-ink);
+}
+.relation-pending button { margin-left: auto; background: none; border: none; cursor: pointer; color: var(--accent-ink); font-size: 1rem; }
+
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+
+/* ---------- search overlay ---------- */
+.modal-search { padding: 14px; }
+.search-input { width: 100%; border: none; outline: none; background: transparent; font-size: 1.1rem; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.search-results { max-height: 50vh; overflow-y: auto; margin-top: 8px; }
+
+/* ---------- course learning page (v0.3, navigation-level page) ---------- */
+.course-page { max-width: 840px; margin: 0 auto; padding: 22px 24px 80px; }
+.course-back { display: inline-block; font-size: 0.86rem; color: var(--ink-dim); margin-bottom: 18px; }
+.course-back:hover { color: var(--accent-ink); }
+
+.course-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+.course-header-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.course-date-input {
+  border: 1px solid transparent; background: transparent; font-family: var(--font-mono); font-size: 0.86rem;
+  color: var(--ink-dim); border-radius: 6px; padding: 4px 6px;
+}
+.course-date-input:hover, .course-date-input:focus { border-color: var(--border); background: var(--surface); }
+.course-title-input {
+  flex: 1; min-width: 200px; border: 1px solid transparent; background: transparent; font-size: 1.5rem; font-weight: 700;
+  color: var(--ink); border-radius: 6px; padding: 4px 6px;
+}
+.course-title-input:hover, .course-title-input:focus { border-color: var(--border); background: var(--surface); outline: none; }
+.course-teacher-row { display: flex; align-items: center; gap: 8px; }
+.course-teacher-label { font-size: 0.78rem; color: var(--ink-faint); white-space: nowrap; }
+.course-teacher-input {
+  border: 1px solid transparent; background: transparent; font-size: 0.92rem; font-weight: 600; color: var(--ink);
+  border-radius: 6px; padding: 4px 6px; max-width: 280px;
+}
+.course-teacher-input:hover, .course-teacher-input:focus { border-color: var(--border); background: var(--surface); outline: none; }
+.course-keywords-input {
+  flex: 1; min-width: 220px; border: 1px solid transparent; background: transparent; font-size: 1.05rem; font-weight: 600;
+  color: var(--ink); border-radius: 6px; padding: 7px 8px;
+}
+.course-keywords-input:hover, .course-keywords-input:focus { border-color: var(--border); background: var(--surface); outline: none; }
+
+.course-section { margin-bottom: 36px; }
+.course-section h3 { font-size: 1rem; margin: 0 0 12px; }
+.course-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+.course-section-head h3 { margin: 0; }
+
+.markdown-content { font-size: 0.96rem; line-height: 1.75; }
+.markdown-content h2 { font-size: 1.15rem; margin: 20px 0 8px; }
+.markdown-content h2:first-child { margin-top: 0; }
+.markdown-content h3 { font-size: 1.02rem; margin: 16px 0 6px; }
+.markdown-content p { margin: 0 0 14px; }
+.markdown-content ul, .markdown-content ol { margin: 0 0 14px; padding-left: 1.4em; }
+.markdown-content li { margin-bottom: 4px; }
+.markdown-content ul li::marker { color: var(--ink-faint); }
+.markdown-content a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-content strong { color: var(--ink); }
+.markdown-content blockquote {
+  margin: 0 0 14px; padding: 10px 16px; border-left: 3px solid var(--accent); background: var(--accent-soft);
+  border-radius: 0 8px 8px 0; color: var(--ink-dim);
+}
+.markdown-content blockquote:last-child { margin-bottom: 0; }
+
+/* 顏色套用在文字本身（color），不是螢光筆式的底色——沿用跟 swatch 圓點
+   一樣的 --hl-* 變數，深色模式已經是校正過、可讀性夠的色調，不用另外調。 */
+.markdown-content .hl-red { color: var(--hl-red); }
+.markdown-content .hl-orange { color: var(--hl-orange); }
+.markdown-content .hl-green { color: var(--hl-green); }
+.markdown-content .hl-blue { color: var(--hl-blue); }
+.markdown-content .hl-purple { color: var(--hl-purple); }
+/* line-height 明確跟字級綁在一起（都是無單位比例，會照各自的 font-size
+   自動換算成實際行高）——字放大或縮小、或用「清除格式」還原成預設大小，
+   行距都會跟著同步變化，不會殘留放大時的行高。 */
+.markdown-content .fs-xxs { font-size: 0.6em; line-height: 1.8; }
+.markdown-content .fs-xs { font-size: 0.7em; line-height: 1.7; }
+.markdown-content .fs-small { font-size: 0.85em; line-height: 1.6; }
+.markdown-content .fs-big { font-size: 1.25em; line-height: 1.4; }
+.markdown-content .fs-xl { font-size: 1.5em; line-height: 1.3; }
+.markdown-content .fs-2xl { font-size: 1.75em; line-height: 1.25; }
+.markdown-content .fs-3xl { font-size: 2em; line-height: 1.2; }
+.markdown-content .fs-4xl { font-size: 2.5em; line-height: 1.15; }
+
+/* 課堂筆記編輯器：工具列／輸入框／操作按鈕整合在同一個圓角邊框內（像
+   Notion 那種一體成形的編輯器），工具列跟按鈕列用淺灰底跟輸入框區分開。 */
+.notes-editor-frame {
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface);
+}
+.md-toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.notes-editor-toolbar {
+  background: var(--surface-alt); padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.md-toolbar button {
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-dim); border-radius: 6px;
+  padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+}
+.md-toolbar button:hover { border-color: var(--accent); color: var(--accent-ink); }
+.md-toolbar-label { font-size: 0.72rem; color: var(--ink-faint); margin: 0 2px 0 4px; }
+.md-toolbar-label:first-child { margin-left: 0; }
+.md-toolbar-divider { width: 1px; align-self: stretch; background: var(--border); margin: 0 2px; }
+.md-swatch {
+  width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid var(--border);
+  cursor: pointer; box-shadow: 0 1px 2px rgba(20, 24, 29, 0.18);
+}
+/* .md-toolbar button 是給文字按鈕（條列/編號/引用…）用的通用底色，選取器
+   比 .md-swatch 更「精確」（多算一個 button 元素），會贏過 .md-swatch 自己
+   的 background，導致顏色方塊變成空的——這裡用 .md-toolbar .md-swatch
+   （兩個 class）拉高優先度蓋回來，不管兩條規則誰先寫都一定生效。 */
+.md-toolbar .md-swatch { background: var(--swatch-color); }
+.md-swatch:hover { border-color: var(--ink-dim); transform: scale(1.08); }
+/* 所見即所得：直接在這裡打字看到的就是最後存檔的樣子（顏色／字級／條列都
+   即時生效），不再需要另外的預覽區塊。.markdown-content 這個 class 讓編輯
+   區套用跟顯示模式一模一樣的排版規則（h2/ul/blockquote/hl-*/fs-* 等）。 */
+.notes-editable {
+  min-height: 300px; padding: 14px 16px; font-size: 0.94rem; outline: none; overflow-wrap: break-word;
+  caret-color: var(--accent-ink);
+}
+/* 空白提示文字：容器不再是真的 :empty（裡面固定放一個 <p></p> 讓游標能
+   正常顯示，見 courses.js），改用 :has() 判斷「唯一的子元素是空的 <p>」。 */
+.notes-editable:empty::before,
+.notes-editable:has(> p:only-child:empty)::before {
+  content: attr(data-placeholder); color: var(--ink-faint);
+}
+.course-notes-actions {
+  display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px;
+  background: var(--surface-alt); border-top: 1px solid var(--border);
+}
+
+.course-video-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.course-video-row input[type="text"] {
+  flex: 1; min-width: 220px; border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  padding: 9px 12px; font-size: 0.9rem;
+}
+
+.attachment-list { display: flex; flex-direction: column; gap: 8px; }
+.attachment-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface);
+}
+.attachment-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.attachment-icon { font-size: 1.6rem; flex-shrink: 0; width: 44px; text-align: center; }
+.attachment-audio { flex: 1; min-width: 180px; height: 36px; }
+.attachment-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.attachment-name { font-size: 0.88rem; font-weight: 600; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.attachment-size { font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-faint); }
+
+.course-danger { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 36px; }
+
+/* ---------- dashboard view ---------- */
+.dashboard-wrap { max-width: 980px; margin: 0 auto; padding: 30px 20px 60px; }
+.dashboard-greeting h2 { margin: 0 0 4px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 22px 0; }
+.dashboard-card {
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 18px;
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer; box-shadow: var(--shadow);
+}
+.dashboard-card:hover { border-color: var(--accent); }
+.dashboard-card .stat-num { font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: var(--accent-ink); line-height: 1; }
+.dashboard-card .stat-label { font-weight: 600; font-size: 0.9rem; }
+.dashboard-card .stat-sub { font-size: 0.78rem; color: var(--ink-faint); flex: 1; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 3px; }
+.dashboard-card .stat-sub-line { color: var(--ink-dim); overflow-wrap: anywhere; }
+.dashboard-card .stat-sub-date { color: var(--ink-faint); white-space: nowrap; }
+.dashboard-card button { align-self: flex-start; margin-top: 4px; }
+.dashboard-actions { display: flex; gap: 10px; }
+
+/* ---------- misc ---------- */
+.hint { font-size: 0.78rem; color: var(--ink-faint); }
+.toast {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 10px 18px; border-radius: 100px; font-size: 0.86rem; z-index: 80; box-shadow: var(--shadow);
+}
+:root[data-theme] .toast, .toast { background: var(--ink); color: var(--bg); }
+
+@media (max-width: 640px) {
+  .topbar { gap: 10px; }
+  .brand { display: none; }
+  .field-row { grid-template-columns: 1fr; }
+  .rating-row { grid-template-columns: repeat(2, 1fr); }
+  #list-results { grid-template-columns: 1fr; }
+}

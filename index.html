@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>English Second Brain</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">🧠 English Second Brain</div>
+
+      <nav class="nav" id="nav">
+        <a class="nav-chip" href="#/dashboard" data-route="dashboard">總覽</a>
+        <a class="nav-chip" href="#/courses" data-route="courses">課程</a>
+        <a class="nav-chip" href="#/review" data-route="review">複習 <span class="due-badge" id="due-badge" hidden></span></a>
+        <a class="nav-chip" href="#/pending" data-route="pending">待處理 <span class="due-badge" id="pending-badge" hidden></span></a>
+        <a class="nav-chip" href="#/graph" data-route="graph">圖譜</a>
+        <a class="nav-chip" href="#/nodes" data-route="nodes">列表</a>
+      </nav>
+
+      <div class="global-actions">
+        <button class="btn btn-ghost" id="btn-export" type="button">⬇️ 匯出備份</button>
+        <button class="btn btn-ghost" id="btn-import" type="button">⬆️ 匯入備份</button>
+        <input type="file" id="import-file-input" accept="application/json" hidden />
+        <button class="btn btn-ghost" id="btn-search" type="button">🔍 搜尋</button>
+        <button class="btn btn-accent" id="btn-add" type="button">＋ 新增內容</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="view-dashboard" class="view" hidden></section>
+      <section id="view-graph" class="view"></section>
+      <section id="view-review" class="view" hidden></section>
+      <section id="view-nodes" class="view" hidden></section>
+      <section id="view-courses" class="view" hidden></section>
+      <section id="view-course" class="view" hidden></section>
+      <section id="view-pending" class="view" hidden></section>
+    </main>
+  </div>
+
+  <!-- overlay: search -->
+  <div id="overlay-search" class="modal-backdrop" hidden>
+    <div class="modal modal-search" role="dialog" aria-label="搜尋內容">
+      <input id="search-input" class="search-input" type="text" placeholder="搜尋單字／片語／句子…" autocomplete="off" />
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </div>
+
+  <!-- overlay: add/edit node -->
+  <div id="overlay-editor" class="modal-backdrop" hidden>
+    <div class="modal modal-editor" role="dialog" aria-label="新增或編輯內容"></div>
+  </div>
+
+  <!-- overlay: node detail panel (slide-over) -->
+  <div id="overlay-detail" class="panel-backdrop" hidden>
+    <aside class="panel" role="dialog" aria-label="內容詳情"></aside>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
